@@ -1,38 +1,24 @@
 import { Prize, PrizeInput, PrizeUpdate } from '@/types/prize';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
-import path from 'path';
+import { kv } from '@vercel/kv';
 
-const DATA_FILE = path.join(process.cwd(), 'data', 'prizes.json');
+const PRIZES_KEY = 'prizes';
 
-// Ensure data directory exists
-const ensureDataDir = () => {
-  const dataDir = path.dirname(DATA_FILE);
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-};
-
-// Load prizes from file
-const loadPrizes = (): Prize[] => {
+// Load prizes from KV store
+const loadPrizes = async (): Promise<Prize[]> => {
   try {
-    ensureDataDir();
-    if (!fs.existsSync(DATA_FILE)) {
-      return [];
-    }
-    const data = fs.readFileSync(DATA_FILE, 'utf-8');
-    return JSON.parse(data);
+    const data = await kv.get<Prize[]>(PRIZES_KEY);
+    return data || [];
   } catch (error) {
     console.error('Error loading prizes:', error);
     return [];
   }
 };
 
-// Save prizes to file
-const savePrizes = (prizes: Prize[]) => {
+// Save prizes to KV store
+const savePrizes = async (prizes: Prize[]) => {
   try {
-    ensureDataDir();
-    fs.writeFileSync(DATA_FILE, JSON.stringify(prizes, null, 2));
+    await kv.set(PRIZES_KEY, prizes);
   } catch (error) {
     console.error('Error saving prizes:', error);
     throw new Error('Failed to save prizes');
@@ -41,19 +27,19 @@ const savePrizes = (prizes: Prize[]) => {
 
 export const prizeStorage = {
   // Get all prizes
-  getAll: (): Prize[] => {
-    return loadPrizes();
+  getAll: async (): Promise<Prize[]> => {
+    return await loadPrizes();
   },
 
   // Get prize by id
-  getById: (id: string): Prize | undefined => {
-    const prizes = loadPrizes();
+  getById: async (id: string): Promise<Prize | undefined> => {
+    const prizes = await loadPrizes();
     return prizes.find(p => p.id === id);
   },
 
   // Create new prize
-  create: (prizeInput: PrizeInput): Prize => {
-    const prizes = loadPrizes();
+  create: async (prizeInput: PrizeInput): Promise<Prize> => {
+    const prizes = await loadPrizes();
     const newPrize: Prize = {
       id: uuidv4(),
       name: prizeInput.name,
@@ -65,13 +51,13 @@ export const prizeStorage = {
       updatedAt: new Date().toISOString()
     };
     prizes.push(newPrize);
-    savePrizes(prizes);
+    await savePrizes(prizes);
     return newPrize;
   },
 
   // Update existing prize
-  update: (prizeUpdate: PrizeUpdate): Prize | null => {
-    const prizes = loadPrizes();
+  update: async (prizeUpdate: PrizeUpdate): Promise<Prize | null> => {
+    const prizes = await loadPrizes();
     const index = prizes.findIndex(p => p.id === prizeUpdate.id);
     
     if (index === -1) {
@@ -84,13 +70,13 @@ export const prizeStorage = {
       updatedAt: new Date().toISOString()
     };
     
-    savePrizes(prizes);
+    await savePrizes(prizes);
     return prizes[index];
   },
 
   // Delete prize
-  delete: (id: string): boolean => {
-    const prizes = loadPrizes();
+  delete: async (id: string): Promise<boolean> => {
+    const prizes = await loadPrizes();
     const index = prizes.findIndex(p => p.id === id);
     
     if (index === -1) {
@@ -98,7 +84,7 @@ export const prizeStorage = {
     }
 
     prizes.splice(index, 1);
-    savePrizes(prizes);
+    await savePrizes(prizes);
     return true;
   }
 };
