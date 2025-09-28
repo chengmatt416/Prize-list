@@ -23,7 +23,7 @@ A modern, interactive web application for managing and displaying prizes that ca
 - **Real-time updates** - changes immediately reflect on the main page
 
 ### Technical Features
-- **File-based storage** - prizes are saved to local JSON file
+- **Vercel KV storage** - serverless-compatible key-value database
 - **RESTful API** endpoints for all CRUD operations
 - **TypeScript** for type safety and better development experience
 - **Smooth animations** powered by Framer Motion
@@ -90,11 +90,16 @@ npm start
 
 ## 🌐 Deployment on Vercel
 
-This app is optimized for Vercel deployment:
+This app is optimized for Vercel deployment and uses Vercel KV for data storage:
 
 1. Push your code to GitHub
 2. Connect your repository to Vercel
-3. Deploy with zero configuration needed
+3. **Set up Vercel KV database:**
+   - In your Vercel dashboard, go to your project settings
+   - Navigate to "Storage" tab
+   - Create a new KV database
+   - The required environment variables (KV_URL, KV_REST_API_URL, KV_REST_API_TOKEN, KV_REST_API_READ_ONLY_TOKEN) will be automatically added to your project
+4. Deploy with zero additional configuration needed
 
 The `vercel.json` file is already configured with optimal settings.
 
