@@ -30,10 +30,28 @@ export default function AdminPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error';
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchPrizes();
   }, []);
+
+  // Auto-hide notification after 5 seconds
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+  };
 
   const fetchPrizes = async () => {
     try {
@@ -95,10 +113,13 @@ export default function AdminPage() {
           const updatedPrize = await response.json();
           setPrizes(prev => prev.map(p => p.id === editingPrize.id ? updatedPrize : p));
           setEditingPrize(null);
-          // Reset form only on successful update
           setFormData({ name: '', description: '', image: '', requiredStamps: 1 });
+          showNotification('success', 'Prize updated successfully!');
         } else {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `Failed to update prize (${response.status})`;
           console.error('Failed to update prize:', response.status, response.statusText);
+          showNotification('error', errorMessage);
         }
       } else {
         // Create new prize
@@ -112,14 +133,18 @@ export default function AdminPage() {
           const newPrize = await response.json();
           setPrizes(prev => [...prev, newPrize]);
           setShowAddForm(false);
-          // Reset form only on successful creation
           setFormData({ name: '', description: '', image: '', requiredStamps: 1 });
+          showNotification('success', 'Prize created successfully!');
         } else {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `Failed to create prize (${response.status})`;
           console.error('Failed to create prize:', response.status, response.statusText);
+          showNotification('error', errorMessage);
         }
       }
     } catch (error) {
       console.error('Error saving prize:', error);
+      showNotification('error', 'Network error occurred while saving prize. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -135,9 +160,16 @@ export default function AdminPage() {
 
       if (response.ok) {
         setPrizes(prev => prev.filter(p => p.id !== id));
+        showNotification('success', 'Prize deleted successfully!');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `Failed to delete prize (${response.status})`;
+        console.error('Failed to delete prize:', response.status, response.statusText);
+        showNotification('error', errorMessage);
       }
     } catch (error) {
       console.error('Error deleting prize:', error);
+      showNotification('error', 'Network error occurred while deleting prize. Please try again.');
     }
   };
 
@@ -452,6 +484,35 @@ export default function AdminPage() {
           )}
         </div>
       </div>
+
+      {/* Notification Toast */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-lg font-medium text-white z-50 ${
+              notification.type === 'success' 
+                ? 'bg-green-600' 
+                : 'bg-red-600'
+            }`}
+          >
+            <div className="flex items-center space-x-2">
+              {notification.type === 'success' ? (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              )}
+              <span>{notification.message}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
