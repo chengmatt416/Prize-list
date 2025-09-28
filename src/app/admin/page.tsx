@@ -95,6 +95,10 @@ export default function AdminPage() {
           const updatedPrize = await response.json();
           setPrizes(prev => prev.map(p => p.id === editingPrize.id ? updatedPrize : p));
           setEditingPrize(null);
+          // Reset form only on successful update
+          setFormData({ name: '', description: '', image: '', requiredStamps: 1 });
+        } else {
+          console.error('Failed to update prize:', response.status, response.statusText);
         }
       } else {
         // Create new prize
@@ -108,11 +112,12 @@ export default function AdminPage() {
           const newPrize = await response.json();
           setPrizes(prev => [...prev, newPrize]);
           setShowAddForm(false);
+          // Reset form only on successful creation
+          setFormData({ name: '', description: '', image: '', requiredStamps: 1 });
+        } else {
+          console.error('Failed to create prize:', response.status, response.statusText);
         }
       }
-
-      // Reset form
-      setFormData({ name: '', description: '', image: '', requiredStamps: 1 });
     } catch (error) {
       console.error('Error saving prize:', error);
     } finally {
