@@ -5,7 +5,7 @@ import { PrizeInput } from '@/types/prize';
 // GET /api/prizes - Get all prizes
 export async function GET() {
   try {
-    const prizes = prizeStorage.getAll();
+    const prizes = await prizeStorage.getAll();
     return NextResponse.json(prizes);
   } catch (error) {
     console.error('Error fetching prizes:', error);
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newPrize = prizeStorage.create({
+    const newPrize = await prizeStorage.create({
       name,
       description,
       image: prizeImage,

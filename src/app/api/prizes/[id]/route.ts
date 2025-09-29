@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const prize = prizeStorage.getById(id);
+    const prize = await prizeStorage.getById(id);
     
     if (!prize) {
       return NextResponse.json(
@@ -42,7 +42,7 @@ export async function PATCH(
       ...body
     };
 
-    const updatedPrize = prizeStorage.update(updateData);
+    const updatedPrize = await prizeStorage.update(updateData);
     
     if (!updatedPrize) {
       return NextResponse.json(
@@ -68,7 +68,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const deleted = prizeStorage.delete(id);
+    const deleted = await prizeStorage.delete(id);
     
     if (!deleted) {
       return NextResponse.json(
