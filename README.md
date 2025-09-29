@@ -23,7 +23,8 @@ A modern, interactive web application for managing and displaying prizes that ca
 - **Real-time updates** - changes immediately reflect on the main page
 
 ### Technical Features
-- **File-based storage** - prizes are saved to local JSON file
+- **Redis storage** - Production data stored in Redis for fast access and persistence
+- **File-based fallback** - Local development uses JSON files for easy setup
 - **RESTful API** endpoints for all CRUD operations
 - **TypeScript** for type safety and better development experience
 - **Smooth animations** powered by Framer Motion
@@ -52,7 +53,7 @@ The app is designed to be deployed on Vercel for free hosting. The beautiful pur
 - **Styling**: Tailwind CSS 4
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
-- **Storage**: File-based JSON storage
+- **Storage**: Redis (production) / File-based JSON (development)
 - **Deployment**: Vercel-optimized
 
 ## 🏃‍♂️ Getting Started
@@ -94,9 +95,33 @@ This app is optimized for Vercel deployment:
 
 1. Push your code to GitHub
 2. Connect your repository to Vercel
-3. Deploy with zero configuration needed
+3. Set up Redis database (see Redis Setup section below)
+4. Deploy with zero configuration needed
 
 The `vercel.json` file is already configured with optimal settings.
+
+### 🔴 Redis Setup
+
+For production deployment on Vercel, you'll need to set up a Redis database:
+
+#### Option 1: Vercel Redis (Recommended)
+1. Go to your Vercel project dashboard
+2. Navigate to the "Storage" tab
+3. Click "Create Database" and select "Redis"
+4. Follow the setup wizard to create your Redis instance
+5. Vercel will automatically set the `REDIS_URL` environment variable
+
+#### Option 2: External Redis Provider
+1. Choose a Redis provider (Upstash, Redis Cloud, AWS ElastiCache, etc.)
+2. Create a Redis database instance
+3. Get your Redis connection URL
+4. In your Vercel project settings, add the environment variable:
+   - `REDIS_URL`: Your Redis connection string (e.g., `redis://username:password@host:port`)
+
+#### Local Development
+No Redis setup required for local development. The app automatically falls back to file-based JSON storage when `REDIS_URL` is not set.
+
+**📋 For detailed Redis setup instructions, see [REDIS_SETUP.md](./REDIS_SETUP.md)**
 
 ## 📊 API Endpoints
 
