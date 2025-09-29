@@ -23,7 +23,7 @@ A modern, interactive web application for managing and displaying prizes that ca
 - **Real-time updates** - changes immediately reflect on the main page
 
 ### Technical Features
-- **File-based storage** - prizes are saved to local JSON file
+- **Vercel KV storage** - reliable Redis-based key-value storage for production with file-based fallback for development
 - **RESTful API** endpoints for all CRUD operations
 - **TypeScript** for type safety and better development experience
 - **Smooth animations** powered by Framer Motion
@@ -52,7 +52,7 @@ The app is designed to be deployed on Vercel for free hosting. The beautiful pur
 - **Styling**: Tailwind CSS 4
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
-- **Storage**: File-based JSON storage
+- **Storage**: Vercel KV (Redis) with file-based fallback for development
 - **Deployment**: Vercel-optimized
 
 ## 🏃‍♂️ Getting Started
@@ -81,6 +81,20 @@ npm run dev
 
 4. Open your browser and navigate to `http://localhost:3000`
 
+### Environment Setup
+
+The application uses Vercel KV for production storage and falls back to file-based storage for local development.
+
+#### Local Development
+No environment variables are required for local development. The app will automatically use file-based storage in the `data/` directory.
+
+#### Production Deployment on Vercel
+1. Create a new KV database in your Vercel dashboard
+2. The environment variables (`KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN`) will be automatically set
+3. Deploy your application - it will automatically use the KV storage
+
+You can copy `.env.example` to `.env.local` if you want to test with KV storage locally.
+
 ### Building for Production
 
 ```bash
@@ -90,13 +104,20 @@ npm start
 
 ## 🌐 Deployment on Vercel
 
-This app is optimized for Vercel deployment:
+This app is optimized for Vercel deployment with Vercel KV storage:
 
 1. Push your code to GitHub
 2. Connect your repository to Vercel
-3. Deploy with zero configuration needed
+3. Create a new KV database in your Vercel dashboard
+4. Deploy with zero configuration needed
 
-The `vercel.json` file is already configured with optimal settings.
+The KV environment variables will be automatically configured by Vercel when you add a KV store to your project.
+
+### Storage Architecture
+
+- **Production**: Uses Vercel KV (Redis-based) for reliable, scalable storage
+- **Development**: Falls back to local file-based storage for easy development
+- **Automatic Detection**: The app automatically detects the environment and uses the appropriate storage method
 
 ## 📊 API Endpoints
 
