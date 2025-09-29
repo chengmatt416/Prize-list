@@ -81,6 +81,28 @@ npm run dev
 
 4. Open your browser and navigate to `http://localhost:3000`
 
+### Storage Configuration
+
+The application uses dual storage modes:
+
+**Development Mode:**
+- Uses local file system storage (`data/prizes.json`)
+- Automatically creates the data directory if it doesn't exist
+- Perfect for local development and testing
+
+**Production Mode (Vercel):**
+- Uses Vercel KV (Redis) for persistent storage
+- Requires KV configuration in Vercel dashboard
+- Handles serverless environment constraints
+
+### Setting up Vercel KV
+
+1. Create a KV database in your Vercel dashboard
+2. The following environment variables will be automatically configured:
+   - `KV_REST_API_URL`
+   - `KV_REST_API_TOKEN`
+3. Deploy your application - storage will automatically use KV
+
 ### Building for Production
 
 ```bash
