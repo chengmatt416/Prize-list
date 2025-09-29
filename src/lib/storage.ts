@@ -1,16 +1,45 @@
 import { Prize, PrizeInput, PrizeUpdate } from '@/types/prize';
 import { v4 as uuidv4 } from 'uuid';
-import { kv } from '@vercel/kv';
+import { createClient, RedisClientType } from 'redis';
 
 const PRIZES_KEY = 'prizes';
 
-// Load prizes from KV store or fallback to file system in development
+// Global Redis client instance
+let redisClient: RedisClientType | null = null;
+
+// Initialize Redis client
+const getRedisClient = async (): Promise<RedisClientType | null> => {
+  if (!process.env.REDIS_URL) {
+    return null;
+  }
+
+  if (!redisClient) {
+    redisClient = createClient({
+      url: process.env.REDIS_URL
+    });
+
+    redisClient.on('error', (err) => {
+      console.error('Redis Client Error:', err);
+    });
+
+    await redisClient.connect();
+  }
+
+  return redisClient;
+};
+
+// Load prizes from Redis store or fallback to file system in development
 const loadPrizes = async (): Promise<Prize[]> => {
   try {
-    // Try KV store first (production on Vercel)
-    if (process.env.KV_REST_API_URL) {
-      const prizes = await kv.get<Prize[]>(PRIZES_KEY);
-      return prizes || [];
+    // Try Redis first (production on Vercel)
+    const redis = await getRedisClient();
+    if (redis) {
+      const prizesData = await redis.get(PRIZES_KEY);
+      
+      if (prizesData) {
+        return JSON.parse(prizesData);
+      }
+      return [];
     }
     
     // Fallback to file system for local development
@@ -34,12 +63,13 @@ const loadPrizes = async (): Promise<Prize[]> => {
   }
 };
 
-// Save prizes to KV store or fallback to file system in development
+// Save prizes to Redis store or fallback to file system in development
 const savePrizes = async (prizes: Prize[]) => {
   try {
-    // Try KV store first (production on Vercel)
-    if (process.env.KV_REST_API_URL) {
-      await kv.set(PRIZES_KEY, prizes);
+    // Try Redis first (production on Vercel)
+    const redis = await getRedisClient();
+    if (redis) {
+      await redis.set(PRIZES_KEY, JSON.stringify(prizes));
       return;
     }
     
