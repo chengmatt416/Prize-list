@@ -7,13 +7,23 @@ const PRIZES_KEY = 'prizes';
 // Load prizes from KV store or fallback to file system in development
 const loadPrizes = async (): Promise<Prize[]> => {
   try {
-    // Try KV store first (production on Vercel)
-    if (process.env.KV_REST_API_URL) {
-      const prizes = await kv.get<Prize[]>(PRIZES_KEY);
-      return prizes || [];
+    // Try KV store first (production on Vercel or when KV is available)
+    if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+      try {
+        const prizes = await kv.get<Prize[]>(PRIZES_KEY);
+        return prizes || [];
+      } catch (kvError) {
+        console.warn('KV store access failed, falling back to file system:', kvError);
+      }
     }
     
     // Fallback to file system for local development
+    // Skip file system operations in serverless environments where filesystem is read-only
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      console.warn('Running in serverless environment without KV access, returning empty array');
+      return [];
+    }
+    
     const fs = await import('fs');
     const path = await import('path');
     const DATA_FILE = path.join(process.cwd(), 'data', 'prizes.json');
@@ -37,13 +47,23 @@ const loadPrizes = async (): Promise<Prize[]> => {
 // Save prizes to KV store or fallback to file system in development
 const savePrizes = async (prizes: Prize[]) => {
   try {
-    // Try KV store first (production on Vercel)
-    if (process.env.KV_REST_API_URL) {
-      await kv.set(PRIZES_KEY, prizes);
-      return;
+    // Try KV store first (production on Vercel or when KV is available)
+    if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+      try {
+        await kv.set(PRIZES_KEY, prizes);
+        return;
+      } catch (kvError) {
+        console.warn('KV store save failed, falling back to file system:', kvError);
+      }
     }
     
     // Fallback to file system for local development
+    // Skip file system operations in serverless environments where filesystem is read-only
+    if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+      console.error('Cannot save prizes: running in serverless environment without KV access');
+      throw new Error('Storage not available in serverless environment without KV configuration');
+    }
+    
     const fs = await import('fs');
     const path = await import('path');
     const DATA_FILE = path.join(process.cwd(), 'data', 'prizes.json');
