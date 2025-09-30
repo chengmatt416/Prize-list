@@ -30,6 +30,7 @@ export default function AdminPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPrizes();
@@ -81,6 +82,7 @@ export default function AdminPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(null); // Clear any previous errors
 
     try {
       if (editingPrize) {
@@ -98,6 +100,9 @@ export default function AdminPage() {
           // Reset form only on successful update
           setFormData({ name: '', description: '', image: '', requiredStamps: 1 });
         } else {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `Failed to update prize (${response.status})`;
+          setError(errorMessage);
           console.error('Failed to update prize:', response.status, response.statusText);
         }
       } else {
@@ -115,11 +120,15 @@ export default function AdminPage() {
           // Reset form only on successful creation
           setFormData({ name: '', description: '', image: '', requiredStamps: 1 });
         } else {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMessage = errorData.error || `Failed to create prize (${response.status})`;
+          setError(errorMessage);
           console.error('Failed to create prize:', response.status, response.statusText);
         }
       }
     } catch (error) {
       console.error('Error saving prize:', error);
+      setError('Unable to save prize. Please check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -150,11 +159,13 @@ export default function AdminPage() {
       requiredStamps: prize.requiredStamps
     });
     setShowAddForm(false);
+    setError(null); // Clear any errors when starting edit
   };
 
   const cancelEdit = () => {
     setEditingPrize(null);
     setFormData({ name: '', description: '', image: '', requiredStamps: 1 });
+    setError(null); // Clear any errors when canceling
   };
 
   return (
@@ -189,6 +200,7 @@ export default function AdminPage() {
                 setShowAddForm(true);
                 setEditingPrize(null);
                 setFormData({ name: '', description: '', image: '', requiredStamps: 1 });
+                setError(null); // Clear any errors when opening new form
               }}
               className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2"
             >
@@ -225,6 +237,20 @@ export default function AdminPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Error Display */}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-red-500/20 border border-red-500/50 rounded-lg p-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <X className="h-4 w-4 text-red-400" />
+                      <p className="text-red-200 text-sm">{error}</p>
+                    </div>
+                  </motion.div>
+                )}
+
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-white mb-2">
